@@ -58,6 +58,24 @@
                 </button>
             </div>
         @endif
+        <div class="row">
+            <div class="col-md-6">
+               <div class="form-group">
+                    <label for="">Periode</label>
+                    <select name="periode" id="periode" class="form-control">
+                        @foreach ($periode as $p)
+                             <option value="{{ $p->periode }}">{{ $p->periode }}</option>
+                        @endforeach
+                    </select>
+               </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <br>
+                    <button type="button" class="btn btn-primary" onclick="loadData()"><i class="fas fa-refresh"></i> Reload</button>
+                </div>
+            </div>
+        </div>
         <div class="table-responsive">
             <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
               <thead>
@@ -65,10 +83,12 @@
                     <th rowspan="2">PLASA</th>
                     <th rowspan="2">STOK ALL</th>
                     <th colspan="2">REDEEM</th>
-                    <th rowspan="2">SISA STOK</th>
+                    <th colspan="2">SISA</th>
                     <th rowspan="2">ACTION</th>
                 </tr>
                 <tr>
+                    <th>REGULAR</th>
+                    <th>PREMIUM</th>
                     <th>REGULAR</th>
                     <th>PREMIUM</th>
                 </tr>
@@ -106,6 +126,7 @@
     });
 
     function loadData(id){
+        var periode = $("#periode").val()
         $('#dataTable').DataTable({
             dom: 'Bflrtip',
             buttons: [
@@ -120,7 +141,7 @@
             processing: true,
             destroy: true,
             ajax: {
-                url: "{{ url('inv/report/plasa/stok') }}",
+                url: "{{ url('inv/report/plasa/stok') }}?periode="+periode,
                 headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
@@ -128,10 +149,11 @@
             },
             columns: [
                 { name: 'plasa', searchable: false, orderable: true },
-                { name: 'stok_kirim' },
-                { name: 'prev_month' },
-                { name: 'st'},
-                { name: 'stok_redeem'},
+                { name: 'stok_all' },
+                { name: 'redeem' },
+                { name: 'spesial'},
+                { name: 'sisa_redeem'},
+                { name: 'sisa_spesial'},
                 { name: 'action'}
             ],
             order: [[0, 'desc']],

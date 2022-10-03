@@ -438,13 +438,16 @@ class InventoryController extends Controller
         $data = [
             'title' => 'Report Item Stok Plasa',
             'content' => 'admin.inv_stok_plasa',
+            'periode' => DB::select('select distinct periode from inv_list_corporate order by periode desc')
         ];
 
         return view('layout.index',['data' => $data]);
     }
 
-    public function stokPlasa()
+    public function stokPlasa(Request $request)
     {
+        $periode = $request->get('periode');
+        $q_per = empty($periode) ? date('Ym') : $periode;
         $response['data'] = [];
         // $query = DB::select("select a.*, coalesce(stok_redeem_regular,0) stok_redeem_regular, coalesce(stok_redeem_premium,0) stok_redeem_premium, all_stok - (coalesce(stok_redeem_regular,0) + coalesce(stok_redeem_premium,0)) sisa_stok from(
         //     select a.plasa, sum(quantity) all_stok
@@ -461,30 +464,36 @@ class InventoryController extends Controller
         //     case when plasa = 'PLASA DENPASAR' then 'PLASA TEUKU UMAR' else plasa end plasa from inv_list_corporate group by plasa)
         //     b on a.plasa = b.plasa and a.plasa is not null");
         
-        $lisMax = DB::select('select max(periode) per from inv_list_corporate');
-        $query = DB::select("select a.*, coalesce(stok_redeem_regular,0) stok_redeem_regular, coalesce(stok_redeem_premium,0) stok_redeem_premium, all_stok - (coalesce(stok_redeem_regular,0) + coalesce(stok_redeem_premium,0)) sisa_stok from(
-            select a.plasa, sum(quantity) all_stok
+        $query = DB::select("select a.*, coalesce(stok_redeem_regular,0) stok_redeem_regular, coalesce(stok_redeem_premium,0) stok_redeem_premium, stok_redeem - (coalesce(stok_redeem_regular,0)) sisa_stok_regular, stok_redeem_spesial - (coalesce(stok_redeem_premium,0)) sisa_stok_premium  from(
+            select a.plasa, stok_redeem, stok_redeem_spesial
             from(
-                    select plasa, quantity from inv_transaksi_detail where keterangan like '%redeem%' and tgl_kirim::text like '".substr($lisMax[0]->per, 0, 4).'-'.substr($lisMax[0]->per, 4)."%'
-            ) a
+                select plasa, 
+                sum(case when upper(keterangan) like '%REDEEM POIN MY IH%' then quantity else 0 end) stok_redeem,
+                sum(case when upper(keterangan) like '%REDEEM 6000 POIN%' then quantity 
+                     when upper(keterangan) like '%REDEEM 5000 POIN%' then quantity else 0 end) stok_redeem_spesial
+                from(
+                    select plasa, quantity, keterangan from inv_transaksi_detail where keterangan like '%redeem%' and tgl_kirim::text like '".substr($periode, 0, 4).'-'.substr($periode, 4)."%'
+                    ) a 
             group by a.plasa
             order by a.plasa
+            ) a
         ) a
         left join (
         select
             sum(case when periode is not null and price = 2500 or price = 3000 then 1 else 0 end) stok_redeem_regular,
             sum(case when periode is not null and price = 6000 then 1 else 0 end) stok_redeem_premium,
-            case when plasa = 'PLASA DENPASAR' then 'PLASA TEUKU UMAR' else plasa end plasa from inv_list_corporate where periode = '".$lisMax[0]->per."' group by plasa
+            case when plasa = 'PLASA DENPASAR' then 'PLASA TEUKU UMAR' else plasa end plasa from inv_list_corporate where periode = '".$periode."' group by plasa
         )
-        b on a.plasa = b.plasa and a.plasa is not null");
+        b on a.plasa = b.plasa and a.plasa is not null;");
 
         foreach ($query as $i => $v) {
             $response['data'][] = [
                 $v->plasa,
-                $v->all_stok,
+                ($v->stok_redeem + $v->stok_redeem_spesial),
                 $v->stok_redeem_regular,
                 $v->stok_redeem_premium,
-                $v->sisa_stok,
+                $v->sisa_stok_regular,
+                $v->sisa_stok_premium,
                 '
                 <a href="'.url('inv/report/plasa/detail/'.$v->plasa).'" class="btn btn-block btn-danger text-white"><i class="fas fa-table"></i> Detail</a>
                  '
