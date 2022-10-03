@@ -472,7 +472,7 @@ class InventoryController extends Controller
                 sum(case when upper(keterangan) like '%REDEEM 6000 POIN%' then quantity 
                      when upper(keterangan) like '%REDEEM 5000 POIN%' then quantity else 0 end) stok_redeem_spesial
                 from(
-                    select plasa, quantity, keterangan from inv_transaksi_detail where keterangan like '%redeem%' and tgl_kirim::text like '".substr($periode, 0, 4).'-'.substr($periode, 4)."%'
+                    select plasa, quantity, keterangan from inv_transaksi_detail where keterangan like '%redeem%'
                     ) a 
             group by a.plasa
             order by a.plasa
@@ -482,7 +482,7 @@ class InventoryController extends Controller
         select
             sum(case when periode is not null and price = 2500 or price = 3000 then 1 else 0 end) stok_redeem_regular,
             sum(case when periode is not null and price = 6000 then 1 else 0 end) stok_redeem_premium,
-            case when plasa = 'PLASA DENPASAR' then 'PLASA TEUKU UMAR' else plasa end plasa from inv_list_corporate where periode = '".$periode."' group by plasa
+            case when plasa = 'PLASA DENPASAR' then 'PLASA TEUKU UMAR' else plasa end plasa from inv_list_corporate group by plasa
         )
         b on a.plasa = b.plasa and a.plasa is not null;");
 

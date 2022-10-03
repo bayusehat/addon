@@ -87,10 +87,10 @@
                     <th rowspan="2">ACTION</th>
                 </tr>
                 <tr>
-                    <th>REGULAR</th>
-                    <th>PREMIUM</th>
-                    <th>REGULAR</th>
-                    <th>PREMIUM</th>
+                    <th>REGULAR (Redeem)</th>
+                    <th>PREMIUM (Redeem)</th>
+                    <th>REGULAR (Sisa)</th>
+                    <th>PREMIUM (Sisa)</th>
                 </tr>
               </thead>
               <tbody>
@@ -133,7 +133,7 @@
                 {
                     extend: 'excelHtml5',
                     exportOptions: {
-                        columns:  [ 0, 1, 2, 3, 4 ],
+                        columns:  [ 0, 1, 2, 3, 4, 5 ],
                     }
                 }
             ],
