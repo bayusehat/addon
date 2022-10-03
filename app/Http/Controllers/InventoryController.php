@@ -460,11 +460,12 @@ class InventoryController extends Controller
         //     sum(case when periode is not null and price = 6000 then 1 else 0 end) stok_redeem_premium,
         //     case when plasa = 'PLASA DENPASAR' then 'PLASA TEUKU UMAR' else plasa end plasa from inv_list_corporate group by plasa)
         //     b on a.plasa = b.plasa and a.plasa is not null");
-    
+        
+        $lisMax = DB::select('select max(periode) from inv_list_corporate')->get();
         $query = DB::select("select a.*, coalesce(stok_redeem_regular,0) stok_redeem_regular, coalesce(stok_redeem_premium,0) stok_redeem_premium, all_stok - (coalesce(stok_redeem_regular,0) + coalesce(stok_redeem_premium,0)) sisa_stok from(
             select a.plasa, sum(quantity) all_stok
             from(
-                    select plasa, quantity from inv_transaksi_detail where keterangan like '%redeem%' and tgl_kirim::text like '".date('Y-m',strtotime(now()))."%'
+                    select plasa, quantity from inv_transaksi_detail where keterangan like '%redeem%' and tgl_kirim::text like '".substr($lisMax, 0, 4).'-'.substr($lisMax, 4)."%'
             ) a
             group by a.plasa
             order by a.plasa
@@ -473,7 +474,7 @@ class InventoryController extends Controller
         select
             sum(case when periode is not null and price = 2500 or price = 3000 then 1 else 0 end) stok_redeem_regular,
             sum(case when periode is not null and price = 6000 then 1 else 0 end) stok_redeem_premium,
-            case when plasa = 'PLASA DENPASAR' then 'PLASA TEUKU UMAR' else plasa end plasa from inv_list_corporate where periode = '202209' group by plasa
+            case when plasa = 'PLASA DENPASAR' then 'PLASA TEUKU UMAR' else plasa end plasa from inv_list_corporate where periode = '".$lisMax."' group by plasa
         )
         b on a.plasa = b.plasa and a.plasa is not null");
 
@@ -489,7 +490,7 @@ class InventoryController extends Controller
                  '
             ];
         }
-        return response($response);
+        return response($query);
     }
 
     public function stokPlasaPageDetail($plasa)
